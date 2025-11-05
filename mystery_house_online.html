@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mystery House Challenge (A2) – Online</title>
+  <style>
+    :root{
+      --bg:#0f172a; /* slate-900 */
+      --card:#111827; /* gray-900 */
+      --muted:#e5e7eb; /* gray-200 */
+      --accent:#22d3ee; /* cyan-400 */
+      --accent2:#a78bfa; /* violet-400 */
+      --good:#10b981;
+      --bad:#ef4444;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, 'Noto Sans', 'Apple Color Emoji','Segoe UI Emoji';
+      background:linear-gradient(135deg, #0b1220, #0f172a 40%, #1f2937 100%);
+      color:var(--muted);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:24px;
+    }
+    .app{
+      width:100%;
+      max-width:1100px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:16px;
+    }
+    @media(min-width:900px){
+      .grid{grid-template-columns: 1.2fr .8fr;}
+    }
+    .card{
+      background: rgba(17,24,39,.8);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:18px;
+      box-shadow: 0 8px 30px rgba(0,0,0,.35);
+      padding:20px;
+      backdrop-filter: blur(4px);
+    }
+    h1{font-size: clamp(1.4rem, 2.5vw, 2rem); margin:0 0 8px}
+    h2{font-size: clamp(1.1rem, 2vw, 1.4rem); margin:0 0 8px}
+    p{margin:6px 0 10px; line-height:1.5}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .tag{
+      padding:6px 10px; border:1px solid rgba(255,255,255,.15);
+      border-radius:999px; font-size:.9rem;
+      background: linear-gradient(135deg, rgba(34,211,238,.18), rgba(167,139,250,.15));
+    }
+    select, input[type="text"], textarea{
+      width:100%; padding:12px 12px; border-radius:12px;
+      border:1px solid rgba(255,255,255,.15); background:#0b1020; color:var(--muted);
+      outline:none;
+    }
+    textarea{min-height:70px; resize:vertical}
+    button{
+      appearance:none; border:none; border-radius:12px; padding:12px 14px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color:#001018; font-weight:700; cursor:pointer;
+      transition: transform .05s ease, filter .2s;
+    }
+    button:hover{filter:brightness(1.15)}
+    button:active{transform: translateY(1px)}
+    .btn-secondary{
+      background: transparent; color:var(--muted); border:1px solid rgba(255,255,255,.2);
+    }
+    .pill{
+      display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.15);
+      background:rgba(2,6,23,.3);
+      font-size:.9rem;
+    }
+    .small{font-size:.9rem; opacity:.9}
+    .list{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px}
+    .badge{
+      border:1px dashed rgba(255,255,255,.25); padding:6px 10px; border-radius:10px; font-size:.9rem
+    }
+    .good{color:#10b981}
+    .bad{color:#ef4444}
+    .score{
+      font-size:2rem; font-weight:800; letter-spacing:.5px;
+      background:linear-gradient(90deg, var(--accent), var(--accent2));
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+    .divider{height:1px; background:linear-gradient(90deg, transparent, rgba(255,255,255,.2), transparent); margin:12px 0}
+    .muted{opacity:.8}
+    .hidden{display:none}
+    .room-title{font-weight:700; font-size:1.1rem}
+    .toast{
+      position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+      padding:10px 14px; border-radius:12px; background:#0b1020; border:1px solid rgba(255,255,255,.2);
+      box-shadow: 0 8px 22px rgba(0,0,0,.35);
+    }
+    .footer{
+      opacity:.7; font-size:.85rem; text-align:center; margin-top:10px
+    }
+    .tick{font-weight:700}
+    .flex{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .center{display:flex; align-items:center; justify-content:center}
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="grid">
+    <div class="card">
+      <h1>🏠 Mystery House Challenge (A2)</h1>
+      <p class="small muted">Topic: <span class="pill">House & Furniture</span> Grammar: <span class="pill">There is / There are</span> <span class="pill">WH-questions</span></p>
+      <div class="divider"></div>
+
+      <div class="row">
+        <label for="mode" class="pill">Mode</label>
+        <select id="mode">
+          <option value="class">Class (teacher projects)</option>
+          <option value="teams">Teams (pass the device)</option>
+          <option value="solo">Solo practice</option>
+        </select>
+        <button id="newGameBtn">🎲 New Room</button>
+        <button id="resetBtn" class="btn-secondary">Reset</button>
+      </div>
+
+      <div class="divider"></div>
+
+      <div id="roomWrap" class="hidden">
+        <div class="row">
+          <div class="room-title" id="roomTitle">Room: —</div>
+          <div class="pill">Keep it secret 🤫</div>
+        </div>
+        <p class="muted small">Items in this room:</p>
+        <div class="list" id="itemsList"></div>
+      </div>
+
+      <div id="tasks" class="hidden">
+        <h2>✍️ Write your sentences</h2>
+        <p class="small muted">Use <b>There is / There are</b>. Include capitalization and a period.</p>
+        <div class="divider"></div>
+
+        <label>1) Positive (singular)</label>
+        <input id="s1" type="text" placeholder="There is a ... in the ... ."/>
+        <label>2) Positive (plural)</label>
+        <input id="s2" type="text" placeholder="There are ... in the ... ."/>
+        <label>3) Negative</label>
+        <input id="s3" type="text" placeholder="There isn’t / There aren’t ..."/>
+        <label>4) WH-question</label>
+        <input id="s4" type="text" placeholder="Where / What / How many ...?"/>
+        <label>5) Yes/No question</label>
+        <input id="s5" type="text" placeholder="Is there ...? / Are there ...?"/>
+
+        <div class="row" style="margin-top:12px">
+          <button id="checkBtn">✅ Check</button>
+          <button id="showModelBtn" class="btn-secondary">💡 Show model answers</button>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="flex">
+          <div>Score: <span class="score" id="score">0</span> / 5</div>
+          <div id="feedback" class="muted small"></div>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+      <details>
+        <summary class="small">💬 Detective Interview (optional)</summary>
+        <p class="small muted">Ask questions to guess the room. Examples:</p>
+        <div class="list">
+          <span class="badge">Is there a TV?</span>
+          <span class="badge">How many chairs are there?</span>
+          <span class="badge">Where is the table?</span>
+          <span class="badge">What is on the wall?</span>
+        </div>
+      </details>
+
+      <p class="footer">Interface in English for A2 learners. Teacher tips: press <b>🎲 New Room</b> to randomise, students write, then <b>Check</b> to score.</p>
+    </div>
+
+    <div class="card">
+      <h2>📋 Teacher Panel</h2>
+      <p class="small muted">Choose room, preview items, and copy a <b>share link</b>.</p>
+
+      <label>Room</label>
+      <select id="roomSelect"></select>
+
+      <div class="divider"></div>
+
+      <div>
+        <p class="small muted">Share this link (opens the same room on any device):</p>
+        <input id="shareLink" type="text" readonly />
+        <div class="row" style="margin-top:8px">
+          <button id="copyBtn">🔗 Copy link</button>
+          <button id="openBtn" class="btn-secondary">Open in new tab</button>
+        </div>
+      </div>
+
+      <div class="divider"></div>
+
+      <h3>Model answers</h3>
+      <ul id="models"></ul>
+    </div>
+  </div>
+</div>
+
+<div class="toast hidden" id="toast">Link copied!</div>
+
+<script>
+const rooms = [
+  {
+    key:"kitchen", name:"Kitchen",
+    items:["a fridge","three chairs","a table","a microwave","a plant"],
+    models:[
+      "There is a fridge in the kitchen.",
+      "There are three chairs in the kitchen.",
+      "There isn’t a sofa in the kitchen.",
+      "What is on the table?",
+      "Is there a microwave in the kitchen?"
+    ]
+  },
+  {
+    key:"living", name:"Living Room",
+    items:["a sofa","a lamp","a carpet","a TV","two armchairs"],
+    models:[
+      "There is a TV in the living room.",
+      "There are two armchairs in the living room.",
+      "There isn’t a bed in the living room.",
+      "Where is the lamp?",
+      "Is there a sofa in the living room?"
+    ]
+  },
+  {
+    key:"bedroom", name:"Bedroom",
+    items:["a bed","a desk","a chair","a wardrobe","two posters"],
+    models:[
+      "There is a bed in the bedroom.",
+      "There are two posters in the bedroom.",
+      "There isn’t a TV in the bedroom.",
+      "Where is the desk?",
+      "Is there a wardrobe in the bedroom?"
+    ]
+  },
+  {
+    key:"bathroom", name:"Bathroom",
+    items:["a mirror","a toilet","a sink","a shower","a small cabinet"],
+    models:[
+      "There is a mirror in the bathroom.",
+      "There are towels in the bathroom. (or: There are no chairs.)",
+      "There isn’t a sofa in the bathroom.",
+      "What is next to the sink?",
+      "Is there a shower in the bathroom?"
+    ]
+  }
+];
+
+// --- helpers ---
+const $ = sel => document.querySelector(sel);
+function setHidden(el, val){ el.classList.toggle('hidden', !!val) }
+function toast(msg){
+  const t = $("#toast");
+  t.textContent = msg || "Done";
+  setHidden(t,false);
+  setTimeout(()=> setHidden(t,true), 1200);
+}
+
+const dom = {
+  roomWrap: $("#roomWrap"),
+  roomTitle: $("#roomTitle"),
+  itemsList: $("#itemsList"),
+  tasks: $("#tasks"),
+  score: $("#score"),
+  feedback: $("#feedback"),
+  s1: $("#s1"), s2: $("#s2"), s3: $("#s3"), s4: $("#s4"), s5: $("#s5"),
+  newGameBtn: $("#newGameBtn"),
+  resetBtn: $("#resetBtn"),
+  checkBtn: $("#checkBtn"),
+  showModelBtn: $("#showModelBtn"),
+  roomSelect: $("#roomSelect"),
+  shareLink: $("#shareLink"),
+  copyBtn: $("#copyBtn"),
+  openBtn: $("#openBtn"),
+  mode: $("#mode"),
+  modelsList: $("#models"),
+};
+
+let current = rooms[0];
+
+function populateRoomSelect(){
+  dom.roomSelect.innerHTML = rooms.map(r => `<option value="${r.key}">${r.name}</option>`).join("");
+}
+populateRoomSelect();
+
+function renderRoom(room){
+  current = room;
+  dom.roomTitle.textContent = `Room: ${room.name}`;
+  dom.itemsList.innerHTML = room.items.map(i => `<span class="badge">${i}</span>`).join("");
+  dom.modelsList.innerHTML = room.models.map(m => `<li class="small">${m}</li>`).join("");
+  const url = new URL(window.location.href);
+  url.searchParams.set("room", room.key);
+  dom.shareLink.value = url.toString();
+  setHidden(dom.roomWrap,false);
+  setHidden(dom.tasks,false);
+  dom.score.textContent = "0";
+  dom.feedback.textContent = "";
+  [dom.s1,dom.s2,dom.s3,dom.s4,dom.s5].forEach(i => i.value = "");
+}
+renderRoom(current);
+
+// Choose room from URL param if present
+function applyRoomFromURL(){
+  const params = new URLSearchParams(window.location.search);
+  const key = params.get("room");
+  const found = rooms.find(r => r.key===key);
+  if(found){ dom.roomSelect.value = found.key; renderRoom(found); }
+}
+applyRoomFromURL();
+
+// events
+dom.roomSelect.addEventListener("change", e => {
+  const key = e.target.value;
+  const found = rooms.find(r => r.key===key);
+  renderRoom(found);
+  history.replaceState({}, "", dom.shareLink.value);
+});
+
+dom.newGameBtn.addEventListener("click", ()=>{
+  const r = rooms[Math.floor(Math.random()*rooms.length)];
+  dom.roomSelect.value = r.key;
+  renderRoom(r);
+  history.replaceState({}, "", dom.shareLink.value);
+});
+
+dom.resetBtn.addEventListener("click", ()=>{
+  [dom.s1,dom.s2,dom.s3,dom.s4,dom.s5].forEach(i => i.value = "");
+  dom.score.textContent = "0";
+  dom.feedback.textContent = "";
+});
+
+dom.copyBtn.addEventListener("click", ()=>{
+  dom.shareLink.select(); document.execCommand("copy");
+  toast("Link copied!");
+});
+
+dom.openBtn.addEventListener("click", ()=>{
+  window.open(dom.shareLink.value, "_blank");
+});
+
+function checkSentencePatterns(v){
+  v = (v||"").trim();
+  const lower = v.toLowerCase();
+  return {
+    thereIs: /^there is\b/.test(lower),
+    thereAre: /^there are\b/.test(lower),
+    negative: /\b(isn't|is not|aren't|are not)\b/.test(lower),
+    wh: /^(where|what|how many)\b/.test(lower) && /\?$/.test(v.trim()),
+    yesno: /^(is there|are there)\b/.test(lower) && /\?$/.test(v.trim()),
+    punctuation: /[.!?]$/.test(v.trim()),
+  };
+}
+
+function evaluate(){
+  let pts = 0;
+  let notes = [];
+
+  const v1 = dom.s1.value, p1 = checkSentencePatterns(v1);
+  if(p1.thereIs && !p1.negative && p1.punctuation){ pts++; } else { notes.push("1) Start with “There is…”, positive, end with a period."); }
+
+  const v2 = dom.s2.value, p2 = checkSentencePatterns(v2);
+  if(p2.thereAre && !p2.negative && p2.punctuation){ pts++; } else { notes.push("2) Start with “There are…”, positive, end with a period."); }
+
+  const v3 = dom.s3.value, p3 = checkSentencePatterns(v3);
+  if((p3.thereIs || p3.thereAre) && p3.negative && p3.punctuation){ pts++; } else { notes.push("3) Use “There isn’t / There aren’t …” and a period."); }
+
+  const v4 = dom.s4.value, p4 = checkSentencePatterns(v4);
+  if(p4.wh){ pts++; } else { notes.push("4) Start with Where/What/How many…? End with a question mark."); }
+
+  const v5 = dom.s5.value, p5 = checkSentencePatterns(v5);
+  if(p5.yesno){ pts++; } else { notes.push("5) Start with Is there…? / Are there…? End with a question mark."); }
+
+  dom.score.textContent = pts;
+  dom.feedback.innerHTML = pts===5
+    ? "🎉 Great job! All correct."
+    : "Hints: " + notes.join(" ");
+}
+
+dom.checkBtn.addEventListener("click", evaluate);
+
+dom.showModelBtn.addEventListener("click", ()=>{
+  const example = current.models;
+  [dom.s1,dom.s2,dom.s3,dom.s4,dom.s5].forEach((el, i)=> el.value = example[i] || "");
+});
+
+</script>
+</body>
+</html>
